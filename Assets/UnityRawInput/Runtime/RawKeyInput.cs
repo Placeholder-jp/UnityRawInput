@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace UnityRawInput
 {
@@ -65,8 +66,7 @@ namespace UnityRawInput
         public static void LateUpdate()
         {
             // phase更新
-            var keys = new List<RawKey>(infoMap.Keys);
-            foreach (var key in keys)
+            foreach (var key in infoMap.Keys.ToList())
             {
                 var info = infoMap[key];
                 switch (info.phase)
@@ -94,7 +94,7 @@ namespace UnityRawInput
             }
 
             // 差分からUp判定
-            foreach (var key in infoMap.Keys)
+            foreach (var key in infoMap.Keys.ToList())
             {
                 if (!pressedKeys.Contains(key))
                 {
