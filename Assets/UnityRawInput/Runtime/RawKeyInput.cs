@@ -3,6 +3,20 @@ using System.Collections.Generic;
 
 namespace UnityRawInput
 {
+    public enum RawKeyInputPhase
+    {
+        Down,
+        Keep,
+        Up,
+    }
+
+    public struct RawKeyInputInfo
+    {
+        public RawKey key;
+
+        public RawKeyInputPhase phase;
+    }
+
     public static class RawKeyInput
     {
         /// <summary>
@@ -34,6 +48,8 @@ namespace UnityRawInput
         private static IntPtr hookPtr = IntPtr.Zero;
         private static HashSet<RawKey> pressedKeys = new HashSet<RawKey>();
 
+        private static Dictionary<RawKey, RawKeyInputInfo> infoMap = new Dictionary<RawKey, RawKeyInputInfo>();
+
         /// <summary>
         /// Initializes the service and starts processing input messages.
         /// </summary>
@@ -46,6 +62,53 @@ namespace UnityRawInput
             return SetHook();
         }
 
+        public static void LateUpdate()
+        {
+            // phase更新
+            var removeKeys = new List<RawKey>();
+            foreach (var key in infoMap.Keys)
+            {
+                var info = infoMap[key];
+                switch (info.phase)
+                {
+                    case RawKeyInputPhase.Down:
+                        info.phase = RawKeyInputPhase.Keep;
+                        break;
+                    case RawKeyInputPhase.Up:
+                        removeKeys.Add(key);
+                        break;
+                }
+                infoMap[key] = info;
+            }
+            foreach (var key in removeKeys)
+            {
+                infoMap.Remove(key);
+            }
+
+            // 差分からDown判定
+            foreach (var key in pressedKeys)
+            {
+                if (!infoMap.ContainsKey(key))
+                {
+                    var info = new RawKeyInputInfo();
+                    info.key = key;
+                    info.phase = RawKeyInputPhase.Down;
+                    infoMap.Add(key, info);
+                }
+            }
+
+            // 差分からUp判定
+            foreach (var key in infoMap.Keys)
+            {
+                if (!pressedKeys.Contains(key))
+                {
+                    var info = infoMap[key];
+                    info.phase = RawKeyInputPhase.Up;
+                    infoMap[key] = info;
+                }
+            }
+        }
+
         /// <summary>
         /// Terminates the service and stops processing input messages.
         /// </summary>
@@ -55,12 +118,34 @@ namespace UnityRawInput
             pressedKeys.Clear();
         }
 
-        /// <summary>
-        /// Checks whether provided key is currently pressed.
-        /// </summary>
-        public static bool IsKeyDown (RawKey key)
+        public static bool GetKeyDown(RawKey key)
         {
-            return pressedKeys.Contains(key);
+            if (infoMap.ContainsKey(key))
+            {
+                var info = infoMap[key];
+                return info.phase == RawKeyInputPhase.Down;
+            }
+            return false;
+        }
+
+        public static bool GetKey(RawKey key)
+        {
+            if (infoMap.ContainsKey(key))
+            {
+                var info = infoMap[key];
+                return info.phase == RawKeyInputPhase.Keep;
+            }
+            return false;
+        }
+
+        public static bool GetKeyUp(RawKey key)
+        {
+            if (infoMap.ContainsKey(key))
+            {
+                var info = infoMap[key];
+                return info.phase == RawKeyInputPhase.Up;
+            }
+            return false;
         }
 
         private static bool SetHook ()
