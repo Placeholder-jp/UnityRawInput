@@ -13,6 +13,29 @@ public class LogRawKeyInput : MonoBehaviour
         RawKeyInput.OnKeyDown += LogKeyDown;
     }
 
+    private void Update()
+    {
+        if (RawKeyInput.GetKeyDown(RawKey.Space))
+        {
+            Debug.Log("GetKeyDown: space");
+        }
+
+        if (RawKeyInput.GetKey(RawKey.Space))
+        {
+            Debug.Log("GetKey: space");
+        }
+
+        if (RawKeyInput.GetKeyUp(RawKey.Space))
+        {
+            Debug.Log("GetKeyUp: space");
+        }
+    }
+
+    private void LateUpdate()
+    {
+        RawKeyInput.LateUpdate();
+    }
+
     private void OnDisable ()
     {
         RawKeyInput.Stop();
