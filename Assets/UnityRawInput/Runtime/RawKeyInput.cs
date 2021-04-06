@@ -65,24 +65,20 @@ namespace UnityRawInput
         public static void LateUpdate()
         {
             // phase更新
-            var removeKeys = new List<RawKey>();
-            foreach (var key in infoMap.Keys)
+            var keys = new List<RawKey>(infoMap.Keys);
+            foreach (var key in keys)
             {
                 var info = infoMap[key];
                 switch (info.phase)
                 {
                     case RawKeyInputPhase.Down:
                         info.phase = RawKeyInputPhase.Keep;
+                        infoMap[key] = info;
                         break;
                     case RawKeyInputPhase.Up:
-                        removeKeys.Add(key);
+                        infoMap.Remove(key);
                         break;
                 }
-                infoMap[key] = info;
-            }
-            foreach (var key in removeKeys)
-            {
-                infoMap.Remove(key);
             }
 
             // 差分からDown判定
